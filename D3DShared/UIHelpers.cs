@@ -346,11 +346,13 @@ public class ParameterGroup
     /// <summary>
     /// Add a slider to this group
     /// </summary>
-    public void AddSlider(string label, int paramIndex, float initialValue = 0.5f)
+    public void AddSlider(string label, int paramIndex, float initialValue = 0.5f,
+        float rangeMin = 0f, float rangeMax = 1f)
     {
+        float displayValue = rangeMin + initialValue * (rangeMax - rangeMin);
         var lblCtrl = new Label
         {
-            Text = $"{label}: {initialValue:F2}",
+            Text = $"{label}: {displayValue:F2}",
             Width = _sliderWidth,
             Height = 18,
             Font = new Font("Segoe UI", 8),
@@ -368,11 +370,13 @@ public class ParameterGroup
             Margin = new Padding(0, 0, 0, 4)
         };
 
+        float rMin = rangeMin, rMax = rangeMax;
         int idx = paramIndex;
         slider.ValueChanged += (s, e) =>
         {
             float value = slider.Value / 100f;
-            lblCtrl.Text = $"{label}: {value:F2}";
+            float display = rMin + value * (rMax - rMin);
+            lblCtrl.Text = $"{label}: {display:F2}";
             ValueChanged?.Invoke(idx, value);
         };
 
