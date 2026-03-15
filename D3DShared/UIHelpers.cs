@@ -346,13 +346,18 @@ public class ParameterGroup
     /// <summary>
     /// Add a slider to this group
     /// </summary>
-    public void AddSlider(string label, int paramIndex, float initialValue = 0.5f,
-        float rangeMin = 0f, float rangeMax = 1f)
+    public void AddSlider(string label, int paramIndex, float initialValue = 0f,
+        float rangeMin = -1f, float rangeMax = 1f)
     {
-        float displayValue = rangeMin + initialValue * (rangeMax - rangeMin);
+        const int Scale = 100;
+        int min = (int)(rangeMin * Scale);
+        int max = (int)(rangeMax * Scale);
+        int initial = (int)(initialValue * Scale);
+        int tickFreq = Math.Max(1, (max - min) / 4);
+
         var lblCtrl = new Label
         {
-            Text = $"{label}: {displayValue:F2}",
+            Text = $"{label}: {initialValue:F2}",
             Width = _sliderWidth,
             Height = 18,
             Font = new Font("Segoe UI", 8),
@@ -361,22 +366,20 @@ public class ParameterGroup
 
         var slider = new TrackBar
         {
-            Minimum = 0,
-            Maximum = 100,
-            Value = (int)(initialValue * 100),
+            Minimum = min,
+            Maximum = max,
+            Value = initial,
             Width = _sliderWidth,
             Height = 45,
-            TickFrequency = 25,
+            TickFrequency = tickFreq,
             Margin = new Padding(0, 0, 0, 4)
         };
 
-        float rMin = rangeMin, rMax = rangeMax;
         int idx = paramIndex;
         slider.ValueChanged += (s, e) =>
         {
-            float value = slider.Value / 100f;
-            float display = rMin + value * (rMax - rMin);
-            lblCtrl.Text = $"{label}: {display:F2}";
+            float value = slider.Value / (float)Scale;
+            lblCtrl.Text = $"{label}: {value:F2}";
             ValueChanged?.Invoke(idx, value);
         };
 
@@ -406,18 +409,18 @@ public class ParameterGroup
         var item = _sliders.FirstOrDefault(s => s.Index == paramIndex);
         if (item.Slider != null)
         {
-            item.Slider.Value = (int)(Math.Clamp(value, 0f, 1f) * 100);
+            item.Slider.Value = Math.Clamp((int)(value * 100), item.Slider.Minimum, item.Slider.Maximum);
         }
     }
 
     /// <summary>
-    /// Reset all sliders to a value
+    /// Reset all sliders to zero
     /// </summary>
-    public void ResetAll(float value = 0.5f)
+    public void ResetAll(float value = 0f)
     {
         foreach (var (_, slider, _) in _sliders)
         {
-            slider.Value = (int)(value * 100);
+            slider.Value = Math.Clamp((int)(value * 100), slider.Minimum, slider.Maximum);
         }
     }
 
@@ -473,7 +476,6 @@ public class ParameterPanelManager
     public ParameterPanelManager(Control parent, int x, int y, int width, int height, int totalParameters)
     {
         _parameterValues = new float[totalParameters];
-        Array.Fill(_parameterValues, 0.5f);
 
         _tabControl = UIHelpers.CreateTabbedParameterPanel(x, y, width, height);
         parent.Controls.Add(_tabControl);
@@ -541,9 +543,9 @@ public class ParameterPanelManager
     }
 
     /// <summary>
-    /// Reset all parameters to default
+    /// Reset all parameters to zero
     /// </summary>
-    public void ResetAll(float defaultValue = 0.5f)
+    public void ResetAll(float defaultValue = 0f)
     {
         Array.Fill(_parameterValues, defaultValue);
         foreach (var groupList in _groups.Values)
