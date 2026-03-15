@@ -44,7 +44,7 @@ public class BaseSettings
     }
 
     /// <summary>
-    /// Get the settings file path for a given app name
+    /// Get the settings file path for a given app name (in LocalApplicationData)
     /// </summary>
     public static string GetSettingsPath(string appName)
     {
@@ -52,5 +52,13 @@ public class BaseSettings
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             appName,
             "settings.json");
+    }
+
+    /// <summary>
+    /// Get the settings file path next to the executable
+    /// </summary>
+    public static string GetLocalSettingsPath(string fileName = "settings.json")
+    {
+        return Path.Combine(AppContext.BaseDirectory, fileName);
     }
 }
